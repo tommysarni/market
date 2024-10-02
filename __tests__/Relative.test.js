@@ -1,4 +1,4 @@
-const { default: Relative } = require("@/app/dual-citizen/Relative");
+const { default: Relative } = require("@/app/projects/italian-documents/Relative");
 
 test("test props of empty relative", () => {
   const empty = new Relative();
@@ -154,6 +154,75 @@ test("test add big family 2 (change order of add", () => {
   expect(user.parent.parent.posToUser).toBe(2);
 });
 
+test('remove self', () => {
+  const user = new Relative({ isUser: true, posToUser: 0 });
+  user.remove()
+  expect(user.isUser).toBe(true);
+  expect(user.posToUser).toBe(0);
+})
+
+test('remove parent', () => {
+  const user = new Relative({ isUser: true, posToUser: 0 });
+  user.addParent().remove()
+
+  expect(user.parent).toBe(undefined);
+  expect(user.posToUser).toBe(0);
+})
+
+test('remove parent with grandparent', () => {
+  const user = new Relative({ isUser: true, posToUser: 0 });
+  user.addParent().addParent()
+  user.parent.remove()
+
+  expect(user.parent.posToUser).toBe(1);
+  expect(user.posToUser).toBe(0);
+})
+
+test('remove grandparent ', () => {
+  const user = new Relative({ isUser: true, posToUser: 0 });
+  user.addParent().addParent().remove()
+  expect(user.parent.posToUser).toBe(1);
+  expect(user.parent.lira).toBe(true);
+  expect(user.posToUser).toBe(0);
+})
+
+test('remove child ', () => {
+  const user = new Relative({ isUser: true, posToUser: 0 });
+  user.addDescendent().remove()
+  expect(user.posToUser).toBe(0);
+  expect(user.children.length).toBe(0);
+})
+
+test('remove child 2 fake', () => {
+  const user = new Relative({ isUser: true, posToUser: 0 });
+  user.addDescendent().addDescendent().remove()
+  expect(user.posToUser).toBe(0);
+  expect(user.children.length).toBe(0);
+})
+
+test('remove child 2 ', () => {
+  const user = new Relative({ isUser: true, posToUser: 0 });
+  user.addDescendent()
+  user.addDescendent().remove()
+  expect(user.posToUser).toBe(0);
+  expect(user.children.length).toBe(1);
+})
+
+test('remove spouse ', () => {
+  const user = new Relative({ isUser: true, posToUser: 0 });
+  user.addSpouse().remove()
+  expect(user.spouse).toBe(undefined);
+  expect(user.posToUser).toBe(0);
+})
+
+test('remove parent spouse ', () => {
+  const user = new Relative({ isUser: true, posToUser: 0 });
+  user.addParent().addSpouse().remove()
+  expect(user.parent.spouse).toBe(undefined);
+  expect(user.parent.posToUser).toBe(1);
+  expect(user.posToUser).toBe(0);
+})
+
 test("updatePosToUser", () => {
   const user = new Relative({ isUser: true, posToUser: 0 });
   const parent = user.addParent();
@@ -286,5 +355,236 @@ test("test getAllDocs sample fam with divorce", () => {
     user.documentType.divorced,
     user.documentType.naturalization,
   ]);
-  expect(allDocs.get("Great Grandparent Spouse")).toEqual([user.documentType.birth]);
+  expect(allDocs.get("Great Grandparent Spouse")).toEqual([
+    user.documentType.birth,
+  ]);
 });
+
+test("encoding me", () => {
+  const user = new Relative({ isUser: true, posToUser: 0 });
+  expect(user.encodeAllRelatives(user)).toBe("00100000");
+});
+
+test("encoding me child", () => {
+  const user = new Relative({ isUser: true, posToUser: 0 });
+  user.addDescendent();
+  const childStr = "10000000";
+  expect(user.encodeAllRelatives(user)).toBe(childStr + "00100000");
+});
+
+test("encoding me 2 children", () => {
+  const user = new Relative({ isUser: true, posToUser: 0 });
+  user.addDescendent();
+  user.addDescendent();
+  const childStr = "10000000";
+  expect(user.encodeAllRelatives(user)).toBe(childStr + childStr + "00100000");
+});
+
+test("encoding me granparent", () => {
+  const user = new Relative({ isUser: true, posToUser: 0 });
+  user.addParent(new Relative({ deceased: true })).addDescendent();
+  const parentStr = "00000001";
+  const grandparentStr = "00001010";
+  expect(user.encodeAllRelatives(user)).toBe(
+    "00100000" + parentStr + grandparentStr
+  );
+});
+
+test("encoding me parent spouse", () => {
+  const user = new Relative({ isUser: true, posToUser: 0 });
+  user.addSpouse();
+  user.addParent();
+  const parentStr = "00000001";
+  const spouseStr = "01000000";
+  expect(user.encodeAllRelatives(user)).toBe(
+    "00100000" + spouseStr + parentStr
+  );
+});
+
+test("encoding me parent spouse start from spouse", () => {
+  const user = new Relative({ isUser: true, posToUser: 0 });
+  const spouse = user.addSpouse();
+  const parent = user.addParent();
+  const parentStr = "00000001";
+  const spouseStr = "01000000";
+  expect(user.encodeAllRelatives(spouse)).toBe(
+    "00100000" + spouseStr + parentStr
+  );
+});
+test("encoding me parent spouse start from parent", () => {
+  const user = new Relative({ isUser: true, posToUser: 0 });
+  const spouse = user.addSpouse();
+  const parent = user.addParent();
+  const parentStr = "00000001";
+  const spouseStr = "01000000";
+  expect(user.encodeAllRelatives(parent)).toBe(
+    "00100000" + spouseStr + parentStr
+  );
+});
+
+test("test decode me", () => {
+  const dummy = new Relative();
+  const user = "00100000";
+  expect(dummy.decode(user).isUser).toBe(true);
+});
+
+test("test decode child", () => {
+  const dummy = new Relative();
+  const child = "10000000";
+  const decoded = dummy.decode(child);
+  expect(decoded.isUser).toBe(false);
+  expect(decoded.isChild).toBe(true);
+});
+
+test("test decode deceased great grandparent", () => {
+  const dummy = new Relative();
+  const deceasedGreatGrandparent = "00001011";
+  const decoded = dummy.decode(deceasedGreatGrandparent);
+  expect(decoded.isUser).toBe(false);
+  expect(decoded.isChild).toBe(false);
+  expect(decoded.posToUser).toBe(3);
+  expect(decoded.deceased).toBe(true);
+});
+
+test("splitStringByRelative me", () => {
+  const dummy = new Relative();
+  const me = "00100000";
+  const arr = dummy.splitStringByRelative(me);
+  expect(arr.length).toBe(1);
+  expect(arr[0].isUser).toBe(true);
+});
+
+test("splitStringByRelative child me parent", () => {
+  const dummy = new Relative();
+  const child = "10000000";
+  const me = "00100000";
+  const parent = "00010001";
+  const all = `${child}${me}${parent}`;
+  const arr = dummy.splitStringByRelative(all);
+
+  expect(arr.length).toBe(3);
+  expect(arr[0].isChild).toBe(true);
+  expect(arr[1].isUser).toBe(true);
+  expect(arr[2].divorced).toBe(true);
+  expect(arr[2].posToUser).toBe(1);
+});
+
+test("combineRelatives me", () => {
+  const dummy = new Relative();
+  const user = new Relative({ isUser: true, posToUser: 0 });
+  expect(dummy.combineRelatives([user]).isUser).toBe(true);
+});
+
+test("combineRelatives me child", () => {
+  const dummy = new Relative();
+  const me = new Relative({ isUser: true, posToUser: 0 });
+  const child = new Relative({ isChild: true, posToUser: 0 });
+  const user = dummy.combineRelatives([child, me]);
+  expect(user.isUser).toBe(true);
+  expect(user.children.length).toBe(1);
+  expect(user.children[0].isChild).toBe(true);
+  expect(user.children[0].parent.isUser).toBe(true);
+});
+
+test("combineRelatives me child 2", () => {
+  const dummy = new Relative();
+  const me = new Relative({ isUser: true, posToUser: 0 });
+  const child = new Relative({ isChild: true, posToUser: 0 });
+  const user = dummy.combineRelatives([child, child, me]);
+  expect(user.isUser).toBe(true);
+  expect(user.children.length).toBe(2);
+  expect(user.children[0].isChild).toBe(true);
+  expect(user.children[0].parent.isUser).toBe(true);
+  expect(user.children[1].isChild).toBe(true);
+  expect(user.children[1].parent.isUser).toBe(true);
+});
+
+test("combineRelatives me spouse parent parent spouse", () => {
+  const dummy = new Relative();
+  const me = new Relative({ isUser: true, posToUser: 0 });
+  const spouse = new Relative({ isSpouse: true, posToUser: 0 });
+  const parent = new Relative({ posToUser: 1 });
+  const parentSpouse = new Relative({ isSpouse: true, posToUser: 1 });
+  const user = dummy.combineRelatives([me, spouse, parent, parentSpouse]);
+  expect(user.isUser).toBe(true);
+  expect(user.spouse.isSpouse).toBe(true);
+  expect(user.spouse.spouse.isUser).toBe(true);
+  expect(user.parent.descendent.isUser).toBe(true);
+  expect(user.parent.posToUser).toBe(1);
+  expect(user.parent.spouse.posToUser).toBe(1);
+  expect(user.parent.spouse.spouse.descendent.isUser).toBe(true);
+});
+
+test("test decodeAllRelatives", () => {
+  const dummy = new Relative();
+  // child spouse user divorced deceased posToUser
+
+  const child = "10000000";
+  const me = "00100000";
+  const spouse = "01000000";
+  const deceased_parent = "00001001";
+  const parent_spouse = "01000001";
+  const grandparent = "00011010";
+  const grandparent_spouse = "01001010";
+  const great_grandparent = "00001011";
+  const great_grandparent_spouse = "01001011";
+  const all = [
+    child,
+    child,
+    me,
+    spouse,
+    deceased_parent,
+    parent_spouse,
+    grandparent,
+    grandparent_spouse,
+    great_grandparent,
+    great_grandparent_spouse,
+  ].join("");
+  const user = dummy.decodeAllRelatives(all);
+
+  expect(user.isUser).toBe(true);
+  expect(user.children.length).toBe(2);
+  expect(user.children[0].parent.isUser).toBe(true);
+  expect(user.children[1].parent.isUser).toBe(true);
+  expect(user.children[1].posToUser).toBe(-1);
+  expect(user.spouse.isSpouse).toBe(true);
+  expect(user.spouse.spouse.isUser).toBe(true);
+  expect(user.parent.spouse.posToUser).toBe(1);
+  expect(user.parent.spouse.isSpouse).toBe(true);
+  expect(user.parent.spouse.spouse.posToUser).toBe(1);
+  expect(user.parent.posToUser).toBe(1);
+  expect(user.parent.deceased).toBe(true);
+  expect(user.parent.descendent.isUser).toBe(true);
+  expect(user.parent.parent.posToUser).toBe(2);
+  expect(user.parent.parent.divorced).toBe(true);
+  expect(user.parent.parent.deceased).toBe(true);
+  expect(user.parent.parent.spouse.posToUser).toBe(2);
+  expect(user.parent.parent.spouse.spouse.posToUser).toBe(2);
+  expect(user.parent.parent.descendent.descendent.isUser).toBe(true);
+  expect(user.parent.parent.parent.posToUser).toBe(3);
+});
+
+test('decode relative break test', () => {
+  
+})
+
+test("findEncodedRelative me", () => {
+  const user = new Relative({ isUser: true, posToUser: 0 });
+  const found = user.findEncodedRelative("00100000");
+  expect(found.isUser).toBe(true);
+});
+
+test("findEncodedRelative me child", () => {
+  const user = new Relative({ isUser: true, posToUser: 0 });
+  user.addDescendent()
+  const found = user.findEncodedRelative("10000000");
+  expect(found.isUser).toBe(true);
+});
+
+test("findEncodedRelative me parent", () => {
+  const user = new Relative({ isUser: true, posToUser: 0 });
+  user.addParent()
+  const found = user.findEncodedRelative("00000001");
+  expect(found.descendent.isUser).toBe(true);
+});
+

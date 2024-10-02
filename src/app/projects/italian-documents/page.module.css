@@ -75,7 +75,14 @@
     transition: box-shadow cubic-bezier(0.39, 0.575, 0.565, 1) .1s
 }
 
+div.marbleContent:not([class$="finished"]):hover>h3 {
+    animation: pulseText .5s linear 0s infinite alternate;
+}
 
+
+div.insetMarbleContent:not([class$="finished"]):hover>h3 {
+    animation: pulseText .5s linear 0s infinite alternate;
+}
 
 .inputDiv {
     display: flex;
@@ -98,15 +105,13 @@
     }
 
     to {
-        transform: scale(1.05);
+        transform: scale(1.1);
     }
 }
 
 
 
 /* MARBLE END */
-
-
 
 .docs {
     margin-bottom: 20px;
@@ -138,12 +143,9 @@ h3.title {
 
 @media (hover: hover) {
 
-    .box>button {
-        /* display: none; */
-    }
 
     .box:hover>button {
-        /* display: block; */
+
         cursor: pointer;
     }
 }

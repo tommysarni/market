@@ -1,4 +1,4 @@
-const { default: QNode } = require("@/app/dual-citizen/QNode");
+const { default: QNode } = require("@/app/projects/italian-qualification/QNode");
 
 test("empty has undefinded result", () => {
   const empty = new QNode();

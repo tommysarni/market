@@ -1,0 +1,45 @@
+.nodeContainer {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.answerContainer {
+    display: flex;
+    gap: 15px;
+}
+
+.formSection,
+.resultSection {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-around;
+    gap: 5px;
+    width: 100%;
+    min-height: 300px;
+}
+
+.question {
+    text-align: center;
+    font-size: 1em;
+    margin: 20px;
+}
+
+.nodeBtn {
+    padding: 0;
+    margin: 0;
+    border: none;
+    background: transparent;
+    width: 100%;
+}
+
+.nodeBtn>div {
+    height: auto;
+}
+
+.formSection {}
+
+.resultSection {}

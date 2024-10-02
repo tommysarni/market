@@ -2,15 +2,15 @@ const { default: QNode } = require("./QNode");
 
 const qualified = new QNode({
   result:
-    "You qualify for recognition of Italian Citizenship via Administrative Process!",
+    "✅ You qualify for recognition of Italian Citizenship via Administrative Process!",
 });
 const qualifiedJudicial = new QNode({
   result:
-    "You qualify for recognition of Italian Citizenship via Jusdicial Process!",
+    "✅ You qualify for recognition of Italian Citizenship via Jusdicial Process!",
 });
 const unqualified = new QNode({
   result:
-    "You do not qualify for recognition of Italian Citizenship through this line of ancestry.",
+    "❌ You do not qualify for recognition of Italian Citizenship through this line of ancestry.",
 });
 
 const renounceQuestion =
